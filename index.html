@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Theme variables */
+        :root {
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --card: #ffffff;
+            --muted: #6b7280;
+        }
+        .dark {
+            /* Dark theme: deeper background, brighter text, softer cards */
+            --bg: #071022; /* darker page background */
+            --text: #E6EEF8; /* main text - high contrast */
+            --card: #0f1724; /* card surface slightly lighter than page */
+            --muted: #9aa9bf; /* secondary text */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: background-color 0.28s ease, color 0.28s ease;
+        }
+
+        /* Make Tailwind `bg-white` cards respect theme */
+        .dark .bg-white { background-color: var(--card) !important; transition: background-color 0.28s ease; }
+        /* Muted text */
+        .text-gray-500, .text-gray-600, .text-gray-700 { color: var(--muted) !important; transition: color 0.28s ease; }
+
+        /* More theme variables for UI surfaces */
+        :root {
+            --surface: #f1f5f9; /* light surface */
+            --border: #e6e9ef;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --btn-bg: #2563eb;
+            --btn-text: #ffffff;
+            --accent: #06b6d4;
+        }
+        .dark {
+            --surface: #0b1724; /* slightly lighter than page bg for muted surfaces */
+            --border: #182330; /* subtle border for contrast */
+            --input-bg: #0b1420; /* input background */
+            --input-border: #1f2a39; /* input border */
+            --btn-bg: #2563eb; /* keep accent/button color */
+            --btn-text: #e6eef8;
+            --accent: #22d3ee;
+        }
+
+        /* Make common Tailwind text/bg utility classes follow dark theme variables for consistency */
+        .dark .bg-white { background-color: var(--card) !important; transition: background-color 0.28s ease; }
+        .dark .bg-gray-100 { background-color: var(--surface) !important; }
+        .dark .border-gray-200 { border-color: var(--border) !important; }
+        .dark .text-gray-500, .dark .text-gray-600, .dark .text-gray-700 { color: var(--muted) !important; }
+        .dark .text-gray-800, .dark .text-gray-900, .dark .text-gray-700 { color: var(--text) !important; }
+
+        /* Inputs / selects / textareas */
+        input, textarea, select {
+            background-color: var(--input-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--input-border) !important;
+            transition: background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease;
+        }
+
+        /* Buttons */
+        .bg-blue-600, button.bg-blue-600 {
+            background-color: var(--btn-bg) !important;
+            color: var(--btn-text) !important;
+            transition: background-color 0.28s ease, color 0.28s ease;
+        }
+
+        /* Muted surfaces */
+        .bg-gray-100 { background-color: var(--surface) !important; transition: background-color 0.28s ease; }
+        .border-gray-200 { border-color: var(--border) !important; }
+
+        /* Ensure inline SVGs and icons follow theme color */
+        svg { color: var(--text); transition: color 0.28s ease, fill 0.28s ease, stroke 0.28s ease; }
+
+        /* Theme overlay styles */
+        .theme-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.28s ease;
+            z-index: 9999;
+        }
+        .theme-overlay.active { opacity: 1; }
+
+        /* Popover styles for theme chooser */
+        .theme-popover {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            width: 12rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(2,6,23,0.15);
+            border-radius: 8px;
+            z-index: 60;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .theme-popover.hidden { display: none; }
+
+        /* Ensure popover buttons are readable in both themes */
+        .theme-popover .theme-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .theme-popover .theme-option:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        /* Hover polish for exercise cards */
+        .exercise-card {
+            transform-origin: center center;
+            will-change: transform, box-shadow;
+            transition: transform 220ms ease, box-shadow 220ms ease;
+        }
+        .exercise-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+        }
+        /* Make sure images inside card don't bleed when scaled */
+        .exercise-card .aspect-video {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <h1 class="text-2xl font-bold text-gray-800">💪 Gym Companion</h1>
+                <div class="flex items-center gap-2 relative">
+                    <button id="theme-toggle" class="inline-flex items-center px-3 py-1 rounded-md bg-gray-100 text-sm" aria-label="Toggle theme" aria-haspopup="true" aria-expanded="false">⚙️</button>
+                    <!-- Theme popover: explicit choices -->
+                    <div id="theme-popover" class="theme-popover hidden" role="menu" aria-label="Theme options">
+                        <div class="p-2">
+                            <button class="theme-option w-full text-left px-3 py-2 rounded hover:bg-gray-100" data-mode="light" role="menuitem">☀️ Light</button>
+                            <button class="theme-option w-full text-left px-3 py-2 rounded hover:bg-gray-100 mt-1" data-mode="dark" role="menuitem">🌙 Dark</button>
+                            <button class="theme-option w-full text-left px-3 py-2 rounded hover:bg-gray-100 mt-1" data-mode="system" role="menuitem">⚙️ System</button>
+                        </div>
+                    </div>
+                    <button id="menu-toggle" class="sm:hidden p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="bg-white rounded-lg shadow-sm p-2 overflow-x-auto">
+            <div class="flex gap-2 min-w-max" id="tab-buttons">
+                <button class="tab-btn active px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    data-tab="workout">
+                    Workout Tracker
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="routine">
+                    Routine Planner
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="timer">
+                    Timer & Rest
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="macro">
+                    Macro Calculator
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="journal">
+                    Mood & Journal
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="progress">
+                    Progress Charts
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="demos">
+                    Exercise Demos
+                </button>
+                <button class="tab-btn px-4 py-2 rounded-md text-sm font-medium transition-colors" data-tab="diet">
+                    Diet Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Workout Tracker Module -->
+        <div id="workout-tab" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Exercise</h2>
+                <form id="workout-form" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="exercise-name" placeholder="Exercise name" required
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" id="exercise-sets" placeholder="Sets" required min="1"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" id="exercise-reps" placeholder="Reps" required min="1"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" id="exercise-weight" placeholder="Weight (kg)" step="0.5" min="0"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        Add Exercise
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Workout History</h2>
+                <div id="workout-history" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Routine Planner Module -->
+        <div id="routine-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Weekly Routine</h2>
+                <div class="flex gap-2 mb-4">
+                    <button id="apply-suggested-routine" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply Suggested Routine</button>
+                    <button id="clear-routine" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Clear Routine</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="routine-grid">
+                    <!-- Days will be generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Diet Plan Module -->
+        <div id="diet-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Diet Plan</h2>
+                <div class="flex gap-2 mb-4">
+                    <button id="apply-suggested-diet" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply Suggested Diet</button>
+                    <button id="apply-pakistani-diet" class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Apply Pakistani Diet</button>
+                    <button id="clear-diet" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Clear Diet</button>
+                </div>
+                <div id="diet-plan" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Diet days will be rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer & Rest Module -->
+        <div id="timer-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6 text-center">Rest Timer</h2>
+                <div class="text-center mb-6">
+                    <div class="text-6xl font-bold text-gray-800 mb-4" id="timer-display">00:00</div>
+                    <div class="flex gap-2 justify-center mb-4">
+                        <button class="preset-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                            data-seconds="30">30s</button>
+                        <button class="preset-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                            data-seconds="60">60s</button>
+                        <button class="preset-btn px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                            data-seconds="90">90s</button>
+                    </div>
+                    <input type="number" id="custom-timer" placeholder="Custom seconds" min="1"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="flex gap-2 justify-center">
+                    <button id="timer-start"
+                        class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">Start</button>
+                    <button id="timer-pause"
+                        class="px-6 py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors">Pause</button>
+                    <button id="timer-reset"
+                        class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">Reset</button>
+                </div>
+                <div class="mt-4">
+                    <label class="flex items-center justify-center gap-2">
+                        <input type="checkbox" id="sound-toggle" checked class="w-4 h-4">
+                        <span class="text-sm text-gray-700">Sound alert</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Macro Calculator Module -->
+        <div id="macro-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Macro Calculator</h2>
+                <form id="macro-form" class="space-y-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="number" id="macro-age" placeholder="Age" required min="1"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" id="macro-weight" placeholder="Weight (kg)" required min="1" step="0.1"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" id="macro-height" placeholder="Height (cm)" required min="1"
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <select id="macro-gender" required
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                        <select id="macro-activity" required
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Activity level</option>
+                            <option value="1.2">Sedentary</option>
+                            <option value="1.375">Light activity</option>
+                            <option value="1.55">Moderate activity</option>
+                            <option value="1.725">Very active</option>
+                            <option value="1.9">Extra active</option>
+                        </select>
+                        <select id="macro-goal" required
+                            class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select goal</option>
+                            <option value="cut">Cut (lose fat)</option>
+                            <option value="maintain">Maintain</option>
+                            <option value="bulk">Bulk (gain muscle)</option>
+                        </select>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        Calculate Macros
+                    </button>
+                </form>
+                <div id="macro-results" class="hidden">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Your Daily Macros</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">Calories</div>
+                            <div class="text-2xl font-bold text-gray-800" id="result-calories">0</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">Protein (g)</div>
+                            <div class="text-2xl font-bold text-gray-800" id="result-protein">0</div>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">Carbs (g)</div>
+                            <div class="text-2xl font-bold text-gray-800" id="result-carbs">0</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">Fats (g)</div>
+                            <div class="text-2xl font-bold text-gray-800" id="result-fats">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood & Journal Module -->
+        <div id="journal-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Today's Log</h2>
+                <form id="journal-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">How are you feeling?</label>
+                        <div class="flex gap-3 justify-center" id="mood-selector">
+                            <button type="button" class="mood-btn text-4xl hover:scale-110 transition-transform"
+                                data-mood="😢">😢</button>
+                            <button type="button" class="mood-btn text-4xl hover:scale-110 transition-transform"
+                                data-mood="😕">😕</button>
+                            <button type="button" class="mood-btn text-4xl hover:scale-110 transition-transform"
+                                data-mood="😐">😐</button>
+                            <button type="button" class="mood-btn text-4xl hover:scale-110 transition-transform"
+                                data-mood="🙂">🙂</button>
+                            <button type="button" class="mood-btn text-4xl hover:scale-110 transition-transform"
+                                data-mood="😄">😄</button>
+                        </div>
+                        <input type="hidden" id="selected-mood" required>
+                    </div>
+                    <textarea id="journal-notes" rows="5" placeholder="How was your workout? Any notes..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        Save Log
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 max-w-2xl mx-auto">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Past Logs</h2>
+                <div id="journal-history" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Progress Charts Module -->
+        <div id="progress-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Weight Lifted Over Time</h2>
+                    <canvas id="weight-chart"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Body Weight Progress</h2>
+                    <canvas id="body-weight-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exercise Demonstrations Module -->
+        <div id="demos-tab" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Exercise Library</h2>
+                <div class="flex gap-3 mb-4">
+                    <input type="text" id="exercise-search" placeholder="Search exercises..."
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select id="muscle-filter"
+                        class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Muscles</option>
+                        <option value="chest">Chest</option>
+                        <option value="back">Back</option>
+                        <option value="shoulders">Shoulders</option>
+                        <option value="legs">Legs</option>
+                        <option value="arms">Arms</option>
+                        <option value="core">Core</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="exercise-library" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Exercises will be generated by JS -->
+            </div>
+        </div>
+        <div id="gif-container"></div>
+    </main>
+
+    <!-- Theme transition overlay (used briefly while switching theme) -->
+    <div id="theme-overlay" class="theme-overlay" aria-hidden="true"></div>
+
+    <!-- Lightweight fallback tab handler: ensures tabs respond even if later scripts error -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            if (!tabButtons || tabButtons.length === 0) return;
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const tabName = this.dataset.tab;
+                    tabButtons.forEach(btn => { btn.classList.remove('active', 'bg-blue-600', 'text-white'); btn.classList.add('text-gray-600'); });
+                    this.classList.add('active', 'bg-blue-600', 'text-white');
+                    this.classList.remove('text-gray-600');
+
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    const el = document.getElementById(tabName + '-tab');
+                    if (el) el.classList.remove('hidden');
+                });
+            });
+
+            // set initial active state defensively
+            if (tabButtons[0]) {
+                tabButtons[0].classList.add('bg-blue-600', 'text-white');
+                tabButtons[0].classList.remove('text-gray-600');
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
