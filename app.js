@@ -48,9 +48,9 @@ function initTabs() {
             const tabName = button.dataset.tab;
 
             // Update active states
-            tabButtons.forEach(btn => btn.classList.remove('active', 'bg-blue-600', 'text-white'));
+            tabButtons.forEach(btn => btn.classList.remove('active'));
             tabButtons.forEach(btn => btn.classList.add('text-gray-600'));
-            button.classList.add('active', 'bg-blue-600', 'text-white');
+            button.classList.add('active');
             button.classList.remove('text-gray-600');
 
             // Show selected tab
@@ -72,7 +72,7 @@ function initTabs() {
 
     // Set initial active state
     if (tabButtons[0]) {
-        tabButtons[0].classList.add('bg-blue-600', 'text-white');
+        tabButtons[0].classList.add('active');
         tabButtons[0].classList.remove('text-gray-600');
     }
 }
@@ -136,7 +136,7 @@ const WorkoutTracker = {
                                     <div class="text-sm text-gray-600">${ex.sets} sets × ${ex.reps} reps ${ex.weight ? `@ ${ex.weight}kg` : ''}</div>
                                 </div>
                                 <button onclick="WorkoutTracker.deleteExercise(${ex.id})" 
-                                    class="text-red-500 hover:text-red-700 text-sm">Delete</button>
+                                    class="button-33 small red">Delete</button>
                             </div>
                         `).join('')}
                     </div>

@@ -1,0 +1,68 @@
+/* Buttons */
+
+.button-33 {
+  background-color: #c2fbd7;
+  border-radius: 100px;
+  box-shadow: rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,rgba(44, 187, 99, .15) 0 1px 2px,rgba(44, 187, 99, .15) 0 2px 4px,rgba(44, 187, 99, .15) 0 4px 8px,rgba(44, 187, 99, .15) 0 8px 16px,rgba(44, 187, 99, .15) 0 16px 32px;
+  color: green;
+  cursor: pointer;
+  display: inline-block;
+  font-family: CerebriSans-Regular,-apple-system,system-ui,Roboto,sans-serif;
+  padding: 7px 20px;
+  text-align: center;
+  text-decoration: none;
+  transition: all 250ms;
+  border: 0;
+  font-size: 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-33:hover {
+  box-shadow: rgba(44,187,99,.35) 0 -25px 18px -14px inset,rgba(44,187,99,.25) 0 1px 2px,rgba(44,187,99,.25) 0 2px 4px,rgba(44,187,99,.25) 0 4px 8px,rgba(44,187,99,.25) 0 8px 16px,rgba(44,187,99,.25) 0 16px 32px;
+  transform: scale(1.05) rotate(-1deg);
+}
+
+/* Navbar variants */
+.button-33.nav {
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 12px;
+  box-shadow: rgba(44, 187, 99, .12) 0 1px 4px;
+}
+
+.button-33.icon {
+  padding: 6px;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Size helpers */
+.button-33.full { display: block; width: 100%; padding: 10px 16px; border-radius: 10px; }
+.button-33.small { padding: 6px 10px; font-size: 14px; }
+
+/* Color variants (keeps the same style but different colors) */
+.button-33.primary { background-color: #2563eb; color: #ffffff; box-shadow: none; }
+.button-33.green { background-color: #16a34a; color: #ffffff; box-shadow: none; }
+.button-33.red { background-color: #dc2626; color: #ffffff; box-shadow: none; }
+.button-33.yellow { background-color: #d97706; color: #ffffff; box-shadow: none; }
+.button-33.gray { background-color: #e5e7eb; color: #111827; box-shadow: none; }
+
+/* Nav / tab active state */
+.button-33.nav { padding: 6px 10px; font-size: 14px; border-radius: 12px; box-shadow: rgba(44, 187, 99, .12) 0 1px 4px; }
+.button-33.nav.active { background-color: #2563eb; color: #fff; box-shadow: rgba(37,99,235,.18) 0 6px 18px; transform: none; }
+
+/* Hover polish for variants */
+.button-33.primary:hover, .button-33.green:hover, .button-33.red:hover, .button-33.yellow:hover, .button-33.gray:hover {
+  transform: translateY(-2px);
+  filter: brightness(.98);
+}
+
+/* Focus accessibility */
+.button-33:focus { outline: 3px solid rgba(37,99,235,.18); outline-offset: 2px; }
+
